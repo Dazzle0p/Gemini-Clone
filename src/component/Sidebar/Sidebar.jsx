@@ -2,37 +2,58 @@ import React, { useContext, useState } from "react";
 import "./Sidebar.css";
 import { assets } from "../../assets/assets";
 import { Context } from "../../context/context";
+
 const Sidebar = () => {
   const [extended, setExtended] = useState(false);
-  const { onSent, previousPrompt, setRecentPrompt, newChat } = useContext(Context);
+  const { allChats, newChat, loadChat, activeChatId, deleteChat } =
+    useContext(Context);
 
-  const loadprompt = async (prompt) =>{
-    setRecentPrompt(prompt);
-    await onSent(prompt);
-  }
+  const previousPrompts = Object.keys(allChats).map((chatId) => ({
+    id: chatId,
+    title: allChats[chatId][0]?.prompt || "New Chat",
+  }));
 
-  function setExt() {
-    setExtended(!extended);
-  }
+  const handleDelete = (e, chatId) => {
+    // This stops the click from also triggering the loadChat function on the parent div
+    e.stopPropagation();
+    deleteChat(chatId);
+  };
+
   return (
     <div className="sidebar">
       <div className="top">
-        <img src={assets.menu_icon} alt="" className="menu" onClick={setExt} />
-        <div onClick={()=>newChat()} className="new-chat">
+        <img
+          src={assets.menu_icon}
+          alt=""
+          className="menu"
+          onClick={() => setExtended((prev) => !prev)}
+        />
+        <div onClick={newChat} className="new-chat">
           <img src={assets.plus_icon} alt="" />
           {extended ? <p>New Chat</p> : null}
         </div>
         {extended ? (
           <div className="recent">
             <p className="recent-title">Recent</p>
-            {previousPrompt.map((item, index) => {
-              return (
-                <div onClick={()=>loadprompt(item)} className="recent-entry">
-                  <img src={assets.message_icon} alt="" />
-                  <p>{item.slice(0,18)} ...</p>
-                </div>
-              );
-            })}
+
+            {previousPrompts.reverse().map((item) => (
+              <div
+                onClick={() => loadChat(item.id)}
+                className={`recent-entry ${
+                  item.id === activeChatId ? "active" : ""
+                }`}
+                key={item.id}
+              >
+                <img src={assets.message_icon} alt="" />
+                <p>{item.title.slice(0, 18)} ...</p>
+                <img
+                  src={assets.delete_icon}
+                  alt="Delete chat"
+                  className="delete-icon"
+                  onClick={(e) => handleDelete(e, item.id)}
+                />
+              </div>
+            ))}
           </div>
         ) : null}
       </div>
@@ -53,4 +74,5 @@ const Sidebar = () => {
     </div>
   );
 };
+
 export default Sidebar;
